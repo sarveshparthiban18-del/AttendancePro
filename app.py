@@ -11,18 +11,13 @@ app.secret_key = "attendancepro-secret-key"
 db.init_app(app)
 
 
-# --------------------------------
-# CREATE DATABASE
-# --------------------------------
+# ================= DATABASE SETUP =================
 
 with app.app_context():
 
     db.create_all()
 
-    # -----------------------------
-    # CREATE DEMO STUDENT
-    # -----------------------------
-
+    # Create demo student
     student = Student.query.filter_by(
         student_id="student123"
     ).first()
@@ -37,13 +32,8 @@ with app.app_context():
 
         db.session.add(student)
 
-        db.session.commit()
 
-
-    # -----------------------------
-    # CREATE DEMO SUBJECTS
-    # -----------------------------
-
+    # Default subjects
     default_subjects = [
         "Python",
         "Computer Networks",
@@ -60,51 +50,15 @@ with app.app_context():
 
         if not existing_subject:
 
-            new_subject = Subject(
-                name=subject_name
+            db.session.add(
+                Subject(name=subject_name)
             )
 
-            db.session.add(new_subject)
 
     db.session.commit()
 
 
-    # -----------------------------
-    # CREATE DEMO ATTENDANCE
-    # -----------------------------
-
-    demo_data = [
-        ("Python", 30, 27),
-        ("Computer Networks", 35, 28),
-        ("Digital Electronics", 32, 25),
-        ("Microprocessors", 28, 23),
-        ("Communication Systems", 25, 20)
-    ]
-
-    for subject_name, total, present in demo_data:
-
-        existing_record = Attendance.query.filter_by(
-            student_id="student123",
-            subject=subject_name
-        ).first()
-
-        if not existing_record:
-
-            record = Attendance(
-                student_id="student123",
-                subject=subject_name,
-                total_classes=total,
-                present_classes=present
-            )
-
-            db.session.add(record)
-
-    db.session.commit()
-
-
-# --------------------------------
-# STUDENT LOGIN
-# --------------------------------
+# ================= STUDENT LOGIN =================
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -132,9 +86,7 @@ def login():
     return render_template("login.html")
 
 
-# --------------------------------
-# STUDENT REGISTER
-# --------------------------------
+# ================= REGISTER =================
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -170,9 +122,7 @@ def register():
     return render_template("register.html")
 
 
-# --------------------------------
-# STUDENT DASHBOARD
-# --------------------------------
+# ================= STUDENT DASHBOARD =================
 
 @app.route("/dashboard")
 def dashboard():
@@ -189,17 +139,21 @@ def dashboard():
 
     attendance = Attendance.query.filter_by(
         student_id=student_id
+    ).order_by(
+        Attendance.date.desc()
     ).all()
 
-    total_classes = sum(
-        item.total_classes
-        for item in attendance
-    )
+
+    # Overall attendance
+
+    total_classes = len(attendance)
 
     total_present = sum(
-        item.present_classes
-        for item in attendance
+        1
+        for record in attendance
+        if record.status.lower() == "present"
     )
+
 
     if total_classes > 0:
 
@@ -212,19 +166,65 @@ def dashboard():
 
         overall_percentage = 0
 
+
+    # Subject-wise attendance
+
+    subject_data = {}
+
+
+    for record in attendance:
+
+        subject = record.subject
+
+        if subject not in subject_data:
+
+            subject_data[subject] = {
+                "total": 0,
+                "present": 0
+            }
+
+
+        subject_data[subject]["total"] += 1
+
+
+        if record.status.lower() == "present":
+
+            subject_data[subject]["present"] += 1
+
+
+    # Calculate percentage for each subject
+
+    for subject in subject_data:
+
+        total = subject_data[subject]["total"]
+
+        present = subject_data[subject]["present"]
+
+
+        if total > 0:
+
+            subject_data[subject]["percentage"] = round(
+                (present / total) * 100,
+                2
+            )
+
+        else:
+
+            subject_data[subject]["percentage"] = 0
+
+
     return render_template(
         "dashboard.html",
         student=student,
         attendance=attendance,
         total_classes=total_classes,
         total_present=total_present,
-        overall_percentage=overall_percentage
+        overall_percentage=overall_percentage,
+        subject_data=subject_data
     )
 
 
-# --------------------------------
-# STUDENT LOGOUT
-# --------------------------------
+# ================= STUDENT LOGOUT =================
 
 @app.route("/logout")
 def logout():
@@ -234,9 +234,7 @@ def logout():
     return redirect("/")
 
 
-# =================================
-# ADMIN LOGIN
-# =================================
+# ================= ADMIN LOGIN =================
 
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
@@ -246,23 +244,24 @@ def admin_login():
         username = request.form.get("username")
         password = request.form.get("password")
 
+
         if username == "admin" and password == "admin123":
 
             session["admin"] = True
 
             return redirect("/admin")
 
+
         return render_template(
             "admin_login.html",
             error="Invalid admin username or password"
         )
 
+
     return render_template("admin_login.html")
 
 
-# =================================
-# ADMIN DASHBOARD
-# =================================
+# ================= ADMIN DASHBOARD =================
 
 @app.route("/admin")
 def admin():
@@ -271,9 +270,11 @@ def admin():
 
         return redirect("/admin/login")
 
+
     students = Student.query.all()
 
     subjects = Subject.query.all()
+
 
     return render_template(
         "admin.html",
@@ -282,15 +283,12 @@ def admin():
     )
 
 
-# =================================
-# ADD SUBJECT
-# =================================
+# ================= ADD SUBJECT =================
 
 @app.route("/admin/add-subject", methods=["POST"])
 def add_subject():
 
     if not session.get("admin"):
-
         return redirect("/admin/login")
 
     subject_name = request.form.get("subject")
@@ -299,8 +297,9 @@ def add_subject():
 
         subject_name = subject_name.strip()
 
-        existing_subject = Subject.query.filter_by(
-            name=subject_name
+        # Case-insensitive duplicate check
+        existing_subject = Subject.query.filter(
+            db.func.lower(Subject.name) == subject_name.lower()
         ).first()
 
         if not existing_subject:
@@ -310,15 +309,33 @@ def add_subject():
             )
 
             db.session.add(new_subject)
-
             db.session.commit()
 
     return redirect("/admin")
 
+# ================= DELETE SUBJECT =================
 
-# =================================
-# MARK ATTENDANCE
-# =================================
+@app.route("/admin/delete-subject/<int:subject_id>", methods=["POST"])
+def delete_subject(subject_id):
+
+    if not session.get("admin"):
+        return redirect("/admin/login")
+
+    subject = Subject.query.get(subject_id)
+
+    if subject:
+
+        # Delete attendance records for this subject
+        Attendance.query.filter_by(
+            subject=subject.name
+        ).delete()
+
+        db.session.delete(subject)
+        db.session.commit()
+
+    return redirect("/admin")
+
+# ================= MARK ATTENDANCE =================
 
 @app.route("/admin/attendance", methods=["POST"])
 def admin_attendance():
@@ -327,40 +344,143 @@ def admin_attendance():
 
         return redirect("/admin/login")
 
+
     student_id = request.form.get("student_id")
     subject = request.form.get("subject")
+    date = request.form.get("date")
     status = request.form.get("status")
 
-    record = Attendance.query.filter_by(
+
+    # Check if attendance already exists
+    existing = Attendance.query.filter_by(
         student_id=student_id,
-        subject=subject
+        subject=subject,
+        date=date
     ).first()
 
-    if not record:
 
-        record = Attendance(
-            student_id=student_id,
-            subject=subject,
-            total_classes=0,
-            present_classes=0
-        )
+    if existing:
 
-        db.session.add(record)
+        existing.status = status
 
-    record.total_classes += 1
+        db.session.commit()
 
-    if status == "present":
+        return redirect("/admin")
 
-        record.present_classes += 1
 
+    # Create new attendance record
+    record = Attendance(
+        student_id=student_id,
+        subject=subject,
+        date=date,
+        status=status
+    )
+
+
+    db.session.add(record)
+
+    db.session.commit()
+
+
+    return redirect("/admin")
+# ================= ADD STUDENT =================
+
+@app.route("/admin/add-student", methods=["POST"])
+def add_student():
+
+    if not session.get("admin"):
+        return redirect("/admin/login")
+
+    name = request.form.get("name")
+    student_id = request.form.get("student_id")
+    password = request.form.get("password")
+
+    existing_student = Student.query.filter_by(
+        student_id=student_id
+    ).first()
+
+    if existing_student:
+        return redirect("/admin")
+
+    new_student = Student(
+        name=name,
+        student_id=student_id,
+        password=password
+    )
+
+    db.session.add(new_student)
     db.session.commit()
 
     return redirect("/admin")
 
 
-# =================================
-# ADMIN LOGOUT
-# =================================
+# ================= DELETE STUDENT =================
+
+@app.route("/admin/delete-student/<int:student_db_id>", methods=["POST"])
+def delete_student(student_db_id):
+
+    if not session.get("admin"):
+        return redirect("/admin/login")
+
+    student = Student.query.get(student_db_id)
+
+    if student:
+
+        # Delete student's attendance records first
+        Attendance.query.filter_by(
+            student_id=student.student_id
+        ).delete()
+
+        db.session.delete(student)
+
+        db.session.commit()
+
+    return redirect("/admin")
+
+# ================= VIEW ATTENDANCE =================
+
+@app.route("/admin/attendance-records")
+def attendance_records():
+
+    if not session.get("admin"):
+        return redirect("/admin/login")
+
+    records = Attendance.query.order_by(
+        Attendance.date.desc()
+    ).all()
+
+    students = Student.query.all()
+    subjects = Subject.query.all()
+
+    return render_template(
+        "attendance_records.html",
+        records=records,
+        students=students,
+        subjects=subjects
+    )
+
+
+# ================= DELETE ATTENDANCE =================
+
+@app.route(
+    "/admin/delete-attendance/<int:attendance_id>",
+    methods=["POST"]
+)
+def delete_attendance(attendance_id):
+
+    if not session.get("admin"):
+        return redirect("/admin/login")
+
+    record = Attendance.query.get(attendance_id)
+
+    if record:
+
+        db.session.delete(record)
+        db.session.commit()
+
+    return redirect("/admin/attendance-records")
+
+# ================= ADMIN LOGOUT =================
 
 @app.route("/admin/logout")
 def admin_logout():
@@ -370,9 +490,7 @@ def admin_logout():
     return redirect("/admin/login")
 
 
-# =================================
-# RUN APPLICATION
-# =================================
+# ================= RUN APP =================
 
 if __name__ == "__main__":
 

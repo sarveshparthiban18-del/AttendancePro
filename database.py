@@ -17,23 +17,7 @@ class Subject(db.Model):
 
 class Attendance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-
-    student_id = db.Column(
-        db.String(50),
-        nullable=False
-    )
-
-    subject = db.Column(
-        db.String(100),
-        nullable=False
-    )
-
-    total_classes = db.Column(
-        db.Integer,
-        default=0
-    )
-
-    present_classes = db.Column(
-        db.Integer,
-        default=0
-    )
+    student_id = db.Column(db.String(50), nullable=False)
+    subject = db.Column(db.String(100), nullable=False)
+    date = db.Column(db.String(20), nullable=False)
+    status = db.Column(db.String(20), nullable=False)
