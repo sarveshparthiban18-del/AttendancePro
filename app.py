@@ -260,28 +260,46 @@ def admin_login():
 
     return render_template("admin_login.html")
 
-
 # ================= ADMIN DASHBOARD =================
 
 @app.route("/admin")
 def admin():
 
     if not session.get("admin"):
-
         return redirect("/admin/login")
 
-
     students = Student.query.all()
-
     subjects = Subject.query.all()
 
+    # Filters
+    student_filter = request.args.get("student_id", "")
+    subject_filter = request.args.get("subject", "")
+    date_filter = request.args.get("date", "")
+
+    query = Attendance.query
+
+    if student_filter:
+        query = query.filter_by(student_id=student_filter)
+
+    if subject_filter:
+        query = query.filter_by(subject=subject_filter)
+
+    if date_filter:
+        query = query.filter_by(date=date_filter)
+
+    attendance_records = query.order_by(
+        Attendance.date.desc()
+    ).all()
 
     return render_template(
         "admin.html",
         students=students,
-        subjects=subjects
+        subjects=subjects,
+        attendance_records=attendance_records,
+        student_filter=student_filter,
+        subject_filter=subject_filter,
+        date_filter=date_filter
     )
-
 
 # ================= ADD SUBJECT =================
 
@@ -478,8 +496,27 @@ def delete_attendance(attendance_id):
         db.session.delete(record)
         db.session.commit()
 
-    return redirect("/admin/attendance-records")
+    return redirect("/admin")
+#================= EDIT ATTENDANCE =================
 
+@app.route("/admin/edit-attendance/<int:attendance_id>", methods=["POST"])
+def edit_attendance(attendance_id):
+
+    if not session.get("admin"):
+        return redirect("/admin/login")
+
+    record = Attendance.query.get(attendance_id)
+
+    if record:
+
+        record.student_id = request.form.get("student_id")
+        record.subject = request.form.get("subject")
+        record.date = request.form.get("date")
+        record.status = request.form.get("status")
+
+        db.session.commit()
+
+    return redirect("/admin")
 # ================= ADMIN LOGOUT =================
 
 @app.route("/admin/logout")
