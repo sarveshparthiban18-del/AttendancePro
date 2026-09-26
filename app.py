@@ -1,6 +1,10 @@
 from flask import Flask, render_template, request, redirect, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from database import db, Student, Subject, Attendance
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///attendance.db"
@@ -72,7 +76,7 @@ def login():
             student_id=student_id
         ).first()
 
-        if student and student.password == password:
+        if student and check_password_hash(student.password, password):
 
             session["student_id"] = student.student_id
 
@@ -111,7 +115,7 @@ def register():
         new_student = Student(
             name=name,
             student_id=student_id,
-            password=password
+            password=generate_password_hash(password)
         )
 
         db.session.add(new_student)
@@ -526,6 +530,21 @@ def admin_logout():
 
     return redirect("/admin/login")
 
+# ================= 404 ERROR =================
+
+@app.errorhandler(404)
+def page_not_found(error):
+
+    return render_template("404.html"), 404
+
+# ================= 500 ERROR =================
+
+@app.errorhandler(500)
+def internal_server_error(error):
+
+    db.session.rollback()
+
+    return render_template("500.html"), 500
 
 # ================= RUN APP =================
 

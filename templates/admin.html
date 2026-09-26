@@ -344,7 +344,84 @@
             }
 
         }
+        /* ================= MOBILE RESPONSIVE ================= */
 
+@media (max-width: 900px) {
+
+    .sidebar {
+        width: 200px;
+    }
+
+    .main {
+        margin-left: 200px;
+        padding: 20px;
+    }
+
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .card {
+        padding: 18px;
+    }
+
+    table {
+        min-width: 700px;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+}
+
+
+/* ================= SMALL MOBILE ================= */
+
+@media (max-width: 600px) {
+
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+    }
+
+    .main {
+        margin-left: 0;
+        padding: 15px;
+    }
+
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        width: 100%;
+    }
+
+    input,
+    select,
+    button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    table {
+        min-width: 650px;
+    }
+
+    .section {
+        padding: 15px;
+        overflow: hidden;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+}
     </style>
 
 </head>
