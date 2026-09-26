@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>AttendancePro - Admin</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f3f6fb;
+            color: #1f2937;
+        }
+
+        .navbar {
+            height: 70px;
+            background: #111827;
+            color: white;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 40px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .heading {
+            margin-bottom: 25px;
+        }
+
+        .heading h1 {
+            margin-bottom: 8px;
+        }
+
+        .heading p {
+            color: #6b7280;
+        }
+
+        .panel {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+
+            box-shadow:
+                0 5px 20px rgba(0, 0, 0, 0.08);
+
+            margin-bottom: 25px;
+        }
+
+        .panel h2 {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 100%;
+
+            padding: 13px;
+
+            border: 1px solid #d1d5db;
+
+            border-radius: 8px;
+
+            font-size: 15px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        button {
+            border: none;
+
+            padding: 13px 25px;
+
+            border-radius: 8px;
+
+            color: white;
+
+            font-size: 15px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        .add {
+            background: #2563eb;
+        }
+
+        .add:hover {
+            background: #1d4ed8;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .present {
+            background: #16a34a;
+        }
+
+        .present:hover {
+            background: #15803d;
+        }
+
+        .absent {
+            background: #dc2626;
+        }
+
+        .absent:hover {
+            background: #b91c1c;
+        }
+
+        .subject-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .subject {
+            background: #eff6ff;
+
+            color: #2563eb;
+
+            padding: 9px 14px;
+
+            border-radius: 20px;
+
+            font-size: 14px;
+
+            font-weight: bold;
+        }
+
+        .students {
+            width: 100%;
+
+            border-collapse: collapse;
+        }
+
+        .students th,
+        .students td {
+            padding: 14px;
+
+            text-align: left;
+
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .students th {
+            background: #f8fafc;
+        }
+
+        .logout {
+            display: inline-block;
+
+            margin-top: 10px;
+
+            padding: 11px 20px;
+
+            background: #ef4444;
+
+            color: white;
+
+            text-decoration: none;
+
+            border-radius: 8px;
+        }
+
+        .logout:hover {
+            background: #dc2626;
+        }
+
+        @media (max-width: 700px) {
+
+            .navbar {
+                padding: 0 20px;
+            }
+
+            .panel {
+                padding: 20px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+            AttendancePro Admin
+        </div>
+
+        <div>
+            Staff Panel
+        </div>
+
+    </nav>
+
+
+    <div class="container">
+
+
+        <!-- HEADING -->
+
+        <div class="heading">
+
+            <h1>
+                Attendance Management
+            </h1>
+
+            <p>
+                Manage subjects and student attendance.
+            </p>
+
+        </div>
+
+
+        <!-- ADD SUBJECT -->
+
+        <div class="panel">
+
+            <h2>
+                Add New Subject
+            </h2>
+
+            <form method="POST"
+                  action="/admin/add-subject">
+
+                <div class="form-group">
+
+                    <label>
+                        Subject Name
+                    </label>
+
+                    <input
+                        type="text"
+                        name="subject"
+                        placeholder="Example: Database Management Systems"
+                        required
+                    >
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="add">
+
+                    + Add Subject
+
+                </button>
+
+            </form>
+
+        </div>
+
+
+        <!-- SUBJECT LIST -->
+
+        <div class="panel">
+
+            <h2>
+                Available Subjects
+            </h2>
+
+            <div class="subject-list">
+
+                {% for subject in subjects %}
+
+                    <div class="subject">
+
+                        {{ subject.name }}
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+
+        <!-- MARK ATTENDANCE -->
+
+        <div class="panel">
+
+            <h2>
+                Mark Attendance
+            </h2>
+
+            <form
+                method="POST"
+                action="/admin/attendance"
+            >
+
+
+                <!-- STUDENT -->
+
+                <div class="form-group">
+
+                    <label>
+                        Select Student
+                    </label>
+
+                    <select
+                        name="student_id"
+                        required
+                    >
+
+                        <option value="">
+                            Select Student
+                        </option>
+
+                        {% for student in students %}
+
+                        <option
+                            value="{{ student.student_id }}"
+                        >
+
+                            {{ student.student_id }}
+                            -
+                            {{ student.name }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- SUBJECT -->
+
+                <div class="form-group">
+
+                    <label>
+                        Select Subject
+                    </label>
+
+                    <select
+                        name="subject"
+                        required
+                    >
+
+                        <option value="">
+                            Select Subject
+                        </option>
+
+                        {% for subject in subjects %}
+
+                        <option
+                            value="{{ subject.name }}"
+                        >
+
+                            {{ subject.name }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- BUTTONS -->
+
+                <div class="buttons">
+
+                    <button
+                        type="submit"
+                        name="status"
+                        value="present"
+                        class="present"
+                    >
+
+                        ✓ Present
+
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        name="status"
+                        value="absent"
+                        class="absent"
+                    >
+
+                        ✕ Absent
+
+                    </button>
+
+                </div>
+
+
+            </form>
+
+        </div>
+
+
+        <!-- STUDENT LIST -->
+
+        <div class="panel">
+
+            <h2>
+                Registered Students
+            </h2>
+
+            <table class="students">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Student ID
+                        </th>
+
+                        <th>
+                            Name
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for student in students %}
+
+                    <tr>
+
+                        <td>
+                            {{ student.student_id }}
+                        </td>
+
+                        <td>
+                            {{ student.name }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- LOGOUT -->
+
+        <a
+            href="/admin/logout"
+            class="logout"
+        >
+
+            Logout
+
+        </a>
+
+
+    </div>
+
+</body>
+
+</html>

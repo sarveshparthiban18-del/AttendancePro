@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AttendancePro - Login</title>
+
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+
+        body {
+
+            min-height: 100vh;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #111827,
+                    #2563eb
+                );
+
+            padding: 20px;
+        }
+
+
+        /* LOGIN BOX */
+
+        .login-box {
+
+            width: 400px;
+
+            padding: 40px;
+
+            background: white;
+
+            border-radius: 20px;
+
+            box-shadow:
+                0 20px 50px
+                rgba(0, 0, 0, 0.3);
+        }
+
+
+        /* LOGO */
+
+        .logo {
+
+            text-align: center;
+
+            font-size: 32px;
+
+            font-weight: bold;
+
+            color: #2563eb;
+
+            margin-bottom: 8px;
+        }
+
+
+        .subtitle {
+
+            text-align: center;
+
+            color: #6b7280;
+
+            margin-bottom: 30px;
+
+            font-size: 14px;
+        }
+
+
+        /* ERROR MESSAGE */
+
+        .error {
+
+            background: #fee2e2;
+
+            color: #dc2626;
+
+            padding: 12px;
+
+            border-radius: 8px;
+
+            text-align: center;
+
+            margin-bottom: 20px;
+
+            font-size: 14px;
+        }
+
+
+        /* LABEL */
+
+        label {
+
+            display: block;
+
+            margin-bottom: 8px;
+
+            font-weight: bold;
+
+            color: #374151;
+        }
+
+
+        /* INPUT */
+
+        input {
+
+            width: 100%;
+
+            padding: 14px;
+
+            margin-bottom: 20px;
+
+            border: 1px solid #d1d5db;
+
+            border-radius: 10px;
+
+            font-size: 15px;
+
+            transition: 0.2s;
+        }
+
+
+        input:focus {
+
+            outline: none;
+
+            border-color: #2563eb;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(37, 99, 235, 0.1);
+        }
+
+
+        /* LOGIN BUTTON */
+
+        button {
+
+            width: 100%;
+
+            padding: 14px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background: #2563eb;
+
+            color: white;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            transition: 0.2s;
+        }
+
+
+        button:hover {
+
+            background: #1d4ed8;
+
+            transform: translateY(-1px);
+        }
+
+
+        /* REGISTER */
+
+        .register {
+
+            text-align: center;
+
+            margin-top: 25px;
+
+            color: #6b7280;
+
+            font-size: 14px;
+        }
+
+
+        .register a {
+
+            color: #2563eb;
+
+            text-decoration: none;
+
+            font-weight: bold;
+        }
+
+
+        .register a:hover {
+
+            text-decoration: underline;
+        }
+
+
+        /* FOOTER */
+
+        .footer {
+
+            text-align: center;
+
+            margin-top: 25px;
+
+            color: #9ca3af;
+
+            font-size: 12px;
+        }
+
+
+        /* MOBILE */
+
+        @media (max-width: 500px) {
+
+            .login-box {
+
+                width: 100%;
+
+                padding: 30px 25px;
+            }
+
+            .logo {
+
+                font-size: 28px;
+            }
+
+        }
+
+        .admin-link {
+    text-align: center;
+    margin-top: 18px;
+}
+
+.admin-link a {
+    color: #111827;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.admin-link a:hover {
+    color: #2563eb;
+}
+
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <div class="login-box">
+
+
+        <!-- LOGO -->
+
+        <div class="logo">
+            AttendancePro
+        </div>
+
+
+        <div class="subtitle">
+            College Attendance Management System
+        </div>
+
+
+        <!-- ERROR -->
+
+        {% if error %}
+
+        <div class="error">
+
+            {{ error }}
+
+        </div>
+
+        {% endif %}
+
+
+        <!-- LOGIN FORM -->
+
+        <form method="POST" action="/">
+
+
+            <!-- STUDENT ID -->
+
+            <label for="student_id">
+                Student ID
+            </label>
+
+            <input
+                type="text"
+                id="student_id"
+                name="student_id"
+                placeholder="Enter your student ID"
+                required
+            >
+
+
+            <!-- PASSWORD -->
+
+            <label for="password">
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+            >
+
+
+            <!-- LOGIN -->
+
+            <button type="submit">
+                Login
+            </button>
+
+
+        </form>
+
+
+        <!-- REGISTER -->
+
+        <div class="register">
+
+    Don't have an account?
+
+    <a href="/register">
+        Create Account
+    </a>
+
+</div>
+
+
+<div class="admin-link">
+
+    <a href="/admin">
+        Admin Login →
+    </a>
+
+</div>
+
+
+        <!-- FOOTER -->
+
+        <div class="footer">
+
+            AttendancePro © 2026
+
+        </div>
+
+
+    </div>
+
+
+</body>
+
+</html>
