@@ -1,0 +1,10 @@
+{
+  "name": "AttendancePro",
+  "short_name": "AttendancePro",
+  "description": "College Student Attendance Management System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "orientation": "portrait"
+}
