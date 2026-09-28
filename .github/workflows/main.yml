@@ -1,10 +1,6 @@
+
 name: AttendancePro CI
 
-<<<<<<< HEAD
-name: AttendancePro CI
-
-=======
->>>>>>> 09d1ca4a6d7ba801eec89e94b9bb10702e8739c9
 on:
   push:
     branches:
