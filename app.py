@@ -243,24 +243,24 @@ def logout():
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
 
+    admin_username = os.getenv("ADMIN_USERNAME")
+    admin_password = os.getenv("ADMIN_PASSWORD")
+
     if request.method == "POST":
 
         username = request.form.get("username")
         password = request.form.get("password")
 
-
-        if username == "admin" and password == "admin123":
+        if username == admin_username and password == admin_password:
 
             session["admin"] = True
 
             return redirect("/admin")
 
-
         return render_template(
             "admin_login.html",
             error="Invalid admin username or password"
         )
-
 
     return render_template("admin_login.html")
 
@@ -269,40 +269,101 @@ def admin_login():
 @app.route("/admin")
 def admin():
 
+    # Check admin login
     if not session.get("admin"):
         return redirect("/admin/login")
 
+    # Get all students and subjects
     students = Student.query.all()
     subjects = Subject.query.all()
 
-    # Filters
-    student_filter = request.args.get("student_id", "")
-    subject_filter = request.args.get("subject", "")
-    date_filter = request.args.get("date", "")
+    # ================= STATISTICS =================
 
+    total_students = Student.query.count()
+
+    total_subjects = Subject.query.count()
+
+    total_attendance = Attendance.query.count()
+
+    total_present = Attendance.query.filter_by(
+        status="Present"
+    ).count()
+
+    total_absent = Attendance.query.filter_by(
+        status="Absent"
+    ).count()
+
+    # ================= FILTERS =================
+
+    student_filter = request.args.get(
+        "student_id",
+        ""
+    )
+
+    subject_filter = request.args.get(
+        "subject",
+        ""
+    )
+
+    date_filter = request.args.get(
+        "date",
+        ""
+    )
+
+    # Start with all attendance records
     query = Attendance.query
 
+    # Student filter
     if student_filter:
-        query = query.filter_by(student_id=student_filter)
 
+        query = query.filter_by(
+            student_id=student_filter
+        )
+
+    # Subject filter
     if subject_filter:
-        query = query.filter_by(subject=subject_filter)
 
+        query = query.filter_by(
+            subject=subject_filter
+        )
+
+    # Date filter
     if date_filter:
-        query = query.filter_by(date=date_filter)
 
+        query = query.filter_by(
+            date=date_filter
+        )
+
+    # Get filtered records
     attendance_records = query.order_by(
         Attendance.date.desc()
     ).all()
 
+    # ================= SEND DATA TO HTML =================
+
     return render_template(
         "admin.html",
+
+        # Students
         students=students,
+
+        # Subjects
         subjects=subjects,
+
+        # Attendance records
         attendance_records=attendance_records,
+
+        # Filters
         student_filter=student_filter,
         subject_filter=subject_filter,
-        date_filter=date_filter
+        date_filter=date_filter,
+
+        # Statistics
+        total_students=total_students,
+        total_subjects=total_subjects,
+        total_attendance=total_attendance,
+        total_present=total_present,
+        total_absent=total_absent
     )
 
 # ================= ADD SUBJECT =================
@@ -313,25 +374,29 @@ def add_subject():
     if not session.get("admin"):
         return redirect("/admin/login")
 
-    subject_name = request.form.get("subject")
+    subject_name = request.form.get(
+        "subject",
+        ""
+    ).strip()
 
-    if subject_name:
+    # Don't allow empty subject
+    if not subject_name:
+        return redirect("/admin")
 
-        subject_name = subject_name.strip()
+    existing_subject = Subject.query.filter(
+        db.func.lower(Subject.name) == subject_name.lower()
+    ).first()
 
-        # Case-insensitive duplicate check
-        existing_subject = Subject.query.filter(
-            db.func.lower(Subject.name) == subject_name.lower()
-        ).first()
+    # Don't allow duplicate subject
+    if existing_subject:
+        return redirect("/admin")
 
-        if not existing_subject:
+    new_subject = Subject(
+        name=subject_name
+    )
 
-            new_subject = Subject(
-                name=subject_name
-            )
-
-            db.session.add(new_subject)
-            db.session.commit()
+    db.session.add(new_subject)
+    db.session.commit()
 
     return redirect("/admin")
 
@@ -363,48 +428,78 @@ def delete_subject(subject_id):
 def admin_attendance():
 
     if not session.get("admin"):
-
         return redirect("/admin/login")
 
+    student_id = request.form.get(
+        "student_id",
+        ""
+    ).strip()
 
-    student_id = request.form.get("student_id")
-    subject = request.form.get("subject")
-    date = request.form.get("date")
-    status = request.form.get("status")
+    subject = request.form.get(
+        "subject",
+        ""
+    ).strip()
 
+    date = request.form.get(
+        "date",
+        ""
+    ).strip()
 
-    # Check if attendance already exists
+    status = request.form.get(
+        "status",
+        ""
+    ).strip()
+
+    # Check required fields
+    if not student_id or not subject or not date or not status:
+        return redirect("/admin")
+
+    # Only allow valid attendance status
+    if status not in ["Present", "Absent"]:
+        return redirect("/admin")
+
+    # Check whether student exists
+    student = Student.query.filter_by(
+        student_id=student_id
+    ).first()
+
+    if not student:
+        return redirect("/admin")
+
+    # Check whether subject exists
+    subject_record = Subject.query.filter_by(
+        name=subject
+    ).first()
+
+    if not subject_record:
+        return redirect("/admin")
+
+    # Check existing attendance
     existing = Attendance.query.filter_by(
         student_id=student_id,
         subject=subject,
         date=date
     ).first()
 
-
     if existing:
 
         existing.status = status
 
-        db.session.commit()
+    else:
 
-        return redirect("/admin")
+        record = Attendance(
+            student_id=student_id,
+            subject=subject,
+            date=date,
+            status=status
+        )
 
-
-    # Create new attendance record
-    record = Attendance(
-        student_id=student_id,
-        subject=subject,
-        date=date,
-        status=status
-    )
-
-
-    db.session.add(record)
+        db.session.add(record)
 
     db.session.commit()
 
-
     return redirect("/admin")
+
 # ================= ADD STUDENT =================
 
 @app.route("/admin/add-student", methods=["POST"])
@@ -413,10 +508,15 @@ def add_student():
     if not session.get("admin"):
         return redirect("/admin/login")
 
-    name = request.form.get("name")
-    student_id = request.form.get("student_id")
-    password = request.form.get("password")
+    name = request.form.get("name", "").strip()
+    student_id = request.form.get("student_id", "").strip()
+    password = request.form.get("password", "").strip()
 
+    # Check empty fields
+    if not name or not student_id or not password:
+        return redirect("/admin")
+
+    # Check duplicate student ID
     existing_student = Student.query.filter_by(
         student_id=student_id
     ).first()
@@ -424,17 +524,17 @@ def add_student():
     if existing_student:
         return redirect("/admin")
 
+    # Create student
     new_student = Student(
         name=name,
         student_id=student_id,
-        password=password
+        password=generate_password_hash(password)
     )
 
     db.session.add(new_student)
     db.session.commit()
 
     return redirect("/admin")
-
 
 # ================= DELETE STUDENT =================
 
@@ -550,4 +650,8 @@ def internal_server_error(error):
 
 if __name__ == "__main__":
 
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )
